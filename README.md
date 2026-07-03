@@ -11,6 +11,20 @@ DECISIONS.md      Trade-off reasoning and what breaks first past MVP scale
 AI_LOG.md         AI collaboration log (tools, prompts, course corrections)
 ```
 
+# Pulse — Uptime Monitor
+
+A small full-stack application that periodically monitors websites, detects outages using
+multi-region health checks, tracks SSL certificate expiry, and presents live system status
+through an interactive dashboard.
+
+## Dashboard Preview
+
+![Pulse Dashboard](Dashboard.png)
+
+*Figure 1. Pulse dashboard displaying monitored services, real-time status, response times, SSL certificate information, uptime statistics, and the live activity feed.*
+
+---
+
 ## 1-line setup
 
 ```bash
