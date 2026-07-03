@@ -1,0 +1,65 @@
+services:
+  # Serves the API and also runs its own region's checks.
+  backend:
+    build: ./backend
+    container_name: uptime-backend
+    environment:
+      REGION: us-east
+      ROLE: api
+    ports:
+      - "4000:4000"
+    volumes:
+      - backend-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:4000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # Independent checker-only processes — no HTTP port, just their own
+  # scheduler loop against the shared SQLite volume, tagged with their own
+  # region. This is genuinely how multi-region checking is architected;
+  # what's simulated for local dev is the *geography* (all three still run
+  # on this one machine's network egress) — see DECISIONS.md.
+  checker-eu:
+    build: ./backend
+    container_name: uptime-checker-eu
+    environment:
+      REGION: eu-west
+      ROLE: checker
+    volumes:
+      - backend-data:/app/data
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+  checker-ap:
+    build: ./backend
+    container_name: uptime-checker-ap
+    environment:
+      REGION: ap-south
+      ROLE: checker
+    volumes:
+      - backend-data:/app/data
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:4000
+    container_name: uptime-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  backend-data:
